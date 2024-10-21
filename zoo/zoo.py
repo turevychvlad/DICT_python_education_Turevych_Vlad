@@ -134,3 +134,13 @@ WMMm__,-'.'     /      _.\      F'''-+,,   ;_,_.dMMMMMMMM[,_ / `=_}
 (" ~----( ~   Y.  )
  """
 ]
+# Этап 4
+while True:
+    habitat = input("Please enter the number of the habitat you would like to view (or 'exit' to quit): ")
+    if habitat == "exit":
+        print("See you later!")
+        break
+    else:
+        index = int(habitat)
+        print(animals[index])
+        print("---")
