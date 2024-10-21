@@ -3,6 +3,7 @@ print("I love animals!")
 print("Let's check out the animals...")
 print("The deer looks fine.")
 print("The lion looks healthy.")
+
 # Этап 2
 camel = r"""
 The camel habitat...
@@ -19,13 +20,14 @@ The camel habitat...
                ! ; !'',,,',',,,,'!  ;   ;:
               : ;  ! !       ! ! ;  ;   :;
               ; ;   ! !      ! !  ; ;   ;,
-             ; ;    ! !     ! !   ; ; 
+             ; ;    ! !     ! !   ; ;
              ; ;    ! !    ! !     ; ;
             ;,,      !,!   !,!     ;,;
             /_I      L_I   L_I     /_I
 Look at that!
 """
 print(camel)
+
 # Этап 3
 animals = [
     r"""The camel habitat...
@@ -42,11 +44,11 @@ animals = [
                ! ; !'',,,',',,,,'!  ;   ;:
               : ;  ! !       ! ! ;  ;   :;
               ; ;   ! !      ! !  ; ;   ;,
-             ; ;    ! !     ! !   ; ; 
+             ; ;    ! !     ! !   ; ;
              ; ;    ! !    ! !     ; ;
             ;,,      !,!   !,!     ;,;
             /_I      L_I   L_I     /_I""",
-    
+
     r"""The lion habitat...
                                                ,w.
                                              ,YWMMw  ,M  , 
@@ -88,6 +90,7 @@ WMMm__,-'.'     /      _.\      F'''-+,,   ;_,_.dMMMMMMMM[,_ / `=_}
             | || |           | |   | |
             |_||_|           |_|   |_|
            /_//_/           /_/   /_/""",
+
     r"""The goose habitat...
                                         _
                                     ,-"" "".
@@ -100,6 +103,7 @@ WMMm__,-'.'     /      _.\      F'''-+,,   ;_,_.dMMMMMMMM[,_ / `=_}
       <`-       (__< <           :
        (__        (_<_<          ;
         `------------------------------------------ """,
+
     r"""The bat habitat...
     _________________               _________________
      ~-.              \  |\___/|  /              .-~
@@ -112,7 +116,8 @@ WMMm__,-'.'     /      _.\      F'''-+,,   ;_,_.dMMMMMMMM[,_ / `=_}
                /___      /\   /\      ___\
                     ~-. /  \_/  \ .-~
                        V         V """,
-    r"""  The rabbit habitat...
+
+    r"""The rabbit habitat...
          ,
         /|      __
        / |   ,-~ /
@@ -134,6 +139,7 @@ WMMm__,-'.'     /      _.\      F'''-+,,   ;_,_.dMMMMMMMM[,_ / `=_}
 (" ~----( ~   Y.  )
  """
 ]
+
 # Этап 4
 while True:
     habitat = input("Please enter the number of the habitat you would like to view (or 'exit' to quit): ")
