@@ -1,6 +1,10 @@
+import random
+
 print("HANGMAN")
 
-secret_word = 'python'
+words = ['python', 'java', 'javascript', 'php']
+secret_word = random.choice(words)
+
 guess = input("Guess the word: > ")
 
 if guess.lower() == secret_word:
