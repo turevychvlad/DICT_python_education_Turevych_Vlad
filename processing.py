@@ -1,118 +1,189 @@
-# файл для обробки матриць
-
-def read_matrix():
-    # читаємо матрицю
-    try:
-        rows, cols = map(int, input("Введіть кількість рядків і стовпців матриці: ").split())
-        matrix = []
-        for _ in range(rows):
-            row = list(map(float, input("Введіть рядок матриці: ").split()))
-            if len(row) != cols:
-                raise ValueError("Невідповідна кількість елементів у рядку!")
-            matrix.append(row)
-        return matrix
-    except Exception as e:
-        print(f"Помилка при введенні матриці: {e}")
-        return None
-
-def add_matrices():
-    # додаємо матриці
-    try:
-        print("Перша матриця:")
-        matrix_a = read_matrix()
-        print("Друга матриця:")
-        matrix_b = read_matrix()
-
-        if not matrix_a or not matrix_b:
-            raise ValueError("Матриці не зчитані.")
-
-        if len(matrix_a) != len(matrix_b) or len(matrix_a[0]) != len(matrix_b[0]):
-            raise ValueError("Розміри матриць не співпадають.")
-
-        result = []
-        for i in range(len(matrix_a)):
-            row = [matrix_a[i][j] + matrix_b[i][j] for j in range(len(matrix_a[0]))]
-            result.append(row)
-
-        print("Результат додавання матриць:")
-        for row in result:
-            print(" ".join(map(str, row)))
-
-    except Exception as e:
-        print(f"Помилка при додаванні матриць: {e}")
-
-def multiply_by_constant():
-    # множимо матрицю на константу
-    try:
-        matrix = read_matrix()
-        if not matrix:
-            raise ValueError("Матриця не зчитана.")
-
-        const = float(input("Введіть константу для множення: "))
-
-        result = [[element * const for element in row] for row in matrix]
-
-        print("Результат множення матриці на константу:")
-        for row in result:
-            print(" ".join(map(str, row)))
-
-    except Exception as e:
-        print(f"Помилка при множенні на константу: {e}")
-
-def multiply_matrices():
-    # множимо матриці
-    try:
-        print("Перша матриця:")
-        matrix_a = read_matrix()
-        print("Друга матриця:")
-        matrix_b = read_matrix()
-
-        if not matrix_a or not matrix_b:
-            raise ValueError("Матриці не зчитані.")
-
-        if len(matrix_a[0]) != len(matrix_b):
-            raise ValueError("Кількість стовпців першої матриці не дорівнює кількості рядків другої.")
-
-        result = []
-        for i in range(len(matrix_a)):
-            row = []
-            for j in range(len(matrix_b[0])):
-                value = sum(matrix_a[i][k] * matrix_b[k][j] for k in range(len(matrix_b)))
-                row.append(value)
-            result.append(row)
-
-        print("Результат множення матриць:")
-        for row in result:
-            print(" ".join(map(str, row)))
-
-    except Exception as e:
-        print(f"Помилка при множенні матриць: {e}")
-
-def main():
+# Функція для зчитування матриці
+def read_matrix(prompt):
     while True:
         try:
-            print("""
-1. Додавання матриць
-2. Множення матриці на константу
-3. Множення матриць
-0. Вихід
-            """)
-            choice = input("Ваш вибір: ").strip()
+            rows, cols = map(int, input(prompt).split())
+            if rows <= 0 or cols <= 0:
+                raise ValueError("Розміри матриці мають бути додатніми.")
+            break
+        except ValueError as e:
+            print(f"Неправильний ввід: {e}")
 
-            if choice == "1":
-                add_matrices()
-            elif choice == "2":
-                multiply_by_constant()
-            elif choice == "3":
-                multiply_matrices()
-            elif choice == "0":
-                print("Вихід з програми.")
+    print("Enter matrix:")
+    matrix = []
+    for i in range(rows):
+        while True:
+            try:
+                row = list(map(float, input(f"Row {i + 1}: > ").split()))
+                if len(row) != cols:
+                    raise ValueError("Кількість елементів у рядку не відповідає заданій ширині матриці.")
+                matrix.append(row)
                 break
-            else:
-                print("Невірний вибір. Спробуйте ще раз.")
+            except ValueError as e:
+                print(f"Неправильний ввід: {e}")
 
-        except Exception as e:
-            print(f"Помилка в головному меню: {e}")
+    return matrix, rows, cols
 
+
+# Функція для виведення матриці
+def print_matrix(matrix):
+    for row in matrix:
+        print(" ".join(map(str, row)))
+
+
+# Функція для додавання матриць
+def add_matrices():
+    matrix_a, rows_a, cols_a = read_matrix("Enter size of first matrix: > ")
+    matrix_b, rows_b, cols_b = read_matrix("Enter size of second matrix: > ")
+
+    if rows_a != rows_b or cols_a != cols_b:
+        print("The operation cannot be performed.")
+        return
+
+    result = [[matrix_a[i][j] + matrix_b[i][j] for j in range(cols_a)] for i in range(rows_a)]
+    print("The result is:")
+    print_matrix(result)
+
+
+# Функція для множення матриці на константу
+def multiply_by_constant():
+    matrix, rows, cols = read_matrix("Enter size of matrix: > ")
+    while True:
+        try:
+            constant = float(input("Enter constant: > "))
+            break
+        except ValueError:
+            print("Неправильний ввід: Константа має бути числом.")
+
+    result = [[matrix[i][j] * constant for j in range(cols)] for i in range(rows)]
+    print("The result is:")
+    print_matrix(result)
+
+
+# Функція для множення матриць
+def multiply_matrices():
+    matrix_a, rows_a, cols_a = read_matrix("Enter size of first matrix: > ")
+    matrix_b, rows_b, cols_b = read_matrix("Enter size of second matrix: > ")
+
+    if cols_a != rows_b:
+        print("The operation cannot be performed.")
+        return
+
+    result = [[sum(matrix_a[i][k] * matrix_b[k][j] for k in range(cols_a)) for j in range(cols_b)] for i in range(rows_a)]
+    print("The result is:")
+    print_matrix(result)
+
+
+# Функція для транспонування матриці
+def transpose_matrix():
+    matrix, rows, cols = read_matrix("Enter matrix size: > ")
+    
+    print("1. Main diagonal")
+    print("2. Side diagonal")
+    print("3. Vertical line")
+    print("4. Horizontal line")
+    while True:
+        try:
+            choice = int(input("Your choice: > "))
+            if choice not in [1, 2, 3, 4]:
+                raise ValueError("Вибір має бути між 1 і 4.")
+            break
+        except ValueError as e:
+            print(f"Неправильний ввід: {e}")
+
+    if choice == 1:
+        result = [[matrix[j][i] for j in range(rows)] for i in range(cols)]
+    elif choice == 2:
+        result = [[matrix[rows - j - 1][cols - i - 1] for j in range(rows)] for i in range(cols)]
+    elif choice == 3:
+        result = [[matrix[i][cols - j - 1] for j in range(cols)] for i in range(rows)]
+    elif choice == 4:
+        result = [[matrix[rows - i - 1][j] for j in range(cols)] for i in range(rows)]
+
+    print("The result is:")
+    print_matrix(result)
+
+
+# Функція для знаходження визначника матриці
+def determinant(matrix):
+    size = len(matrix)
+
+    if size == 1:
+        return matrix[0][0]
+
+    if size == 2:
+        return matrix[0][0] * matrix[1][1] - matrix[0][1] * matrix[1][0]
+
+    det = 0
+    for col in range(size):
+        minor = [row[:col] + row[col + 1:] for row in matrix[1:]]
+        det += ((-1) ** col) * matrix[0][col] * determinant(minor)
+
+    return det
+
+
+# Функція для знаходження оберненої матриці
+def inverse_matrix():
+    matrix, rows, cols = read_matrix("Enter matrix size: > ")
+
+    if rows != cols:
+        print("This matrix doesn't have an inverse.")
+        return
+
+    det = determinant(matrix)
+    if det == 0:
+        print("This matrix doesn't have an inverse.")
+        return
+
+    size = len(matrix)
+    cofactors = [[((-1) ** (r + c)) * determinant(
+                  [row[:c] + row[c + 1:] for row in (matrix[:r] + matrix[r + 1:])])
+                  for c in range(size)] for r in range(size)]
+    adjugate = [[cofactors[c][r] for c in range(size)] for r in range(size)]
+    inverse = [[adjugate[r][c] / det for c in range(size)] for r in range(size)]
+
+    print("The result is:")
+    print_matrix(inverse)
+
+
+# Головне меню
+def main():
+    while True:
+        print("\n1. Add matrices")
+        print("2. Multiply matrix by a constant")
+        print("3. Multiply matrices")
+        print("4. Transpose matrix")
+        print("5. Calculate a determinant")
+        print("6. Inverse matrix")
+        print("0. Exit")
+
+        while True:
+            try:
+                choice = int(input("Your choice: > "))
+                if choice not in range(0, 7):
+                    raise ValueError("Вибір має бути між 0 і 6.")
+                break
+            except ValueError as e:
+                print(f"Неправильний ввід: {e}")
+
+        if choice == 0:
+            break
+        elif choice == 1:
+            add_matrices()
+        elif choice == 2:
+            multiply_by_constant()
+        elif choice == 3:
+            multiply_matrices()
+        elif choice == 4:
+            transpose_matrix()
+        elif choice == 5:
+            matrix, _, _ = read_matrix("Enter matrix size: > ")
+            print("The result is:")
+            print(determinant(matrix))
+        elif choice == 6:
+            inverse_matrix()
+
+
+# Запуск програми
 if __name__ == "__main__":
     main()
