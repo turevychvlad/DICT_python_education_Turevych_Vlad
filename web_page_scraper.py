@@ -1,118 +1,145 @@
+import os
+import re
+import string
 import requests
 from bs4 import BeautifulSoup
-import string
-import os
 
-# етап 1: отримання цитати з API
+# вимикаємо SSL-перевірку, бо деякі сайти можуть мати самопідписані сертифікати
+from requests.packages.urllib3.exceptions import InsecureRequestWarning
+requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
+
+HEADERS = {
+    'Accept-Language': 'en-US,en;q=0.5',  # примусово ставимо англійську мову
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/121.0.0.0 Safari/537.36'
+}
+
+# Етап 1: запит до API, парсимо JSON, витягуємо цитату
+
 def get_quote():
-    url = input("Input the URL:\n> ").strip()  # отримаємо URL від користувача
+    url = input("Input the URL:\n> ").strip()
     try:
-        response = requests.get(url)  # надіслати GET-запит
-        if response.status_code != 200:
-            print("Invalid quote resource!")  # якщо статус не 200 — помилка
+        res = requests.get(url, verify=False, headers=HEADERS)
+        if res.status_code != 200:
+            print("Invalid quote resource!")
             return
-        data = response.json()  # розпарсити JSON відповідь
-        if 'content' not in data:
-            print("Invalid quote resource!")  # якщо немає ключа 'content' — помилка
-            return
-        print(data['content'])  # вивести цитату
-    except:
-        print("Invalid quote resource!")  # будь-яка інша помилка — теж виводимо помилку
+        data = res.json()
+        quote = data.get('content')
+        if not quote:
+            print("Invalid quote resource!")
+        else:
+            print(quote)
+    except Exception:
+        print("Invalid quote resource!")
 
-# етап 2: парсинг imdb сторінки фільму
-def get_imdb_info():
-    url = input("Input the URL:\n> ").strip()  # отримаємо URL
-    if "imdb.com/title/" not in url:
-        print("Invalid movie page!")  # перевірка на IMDb movie page
-        return
-    response = requests.get(url, headers={'Accept-Language': 'en-US,en;q=0.5'})
-    if response.status_code != 200:
+# Етап 2: дістаємо title та description з IMDb
+
+def get_movie_info():
+    url = input("Input the URL:\n> ").strip()
+    if 'imdb.com/title/' not in url:
         print("Invalid movie page!")
         return
-    soup = BeautifulSoup(response.text, 'html.parser')  # парсимо HTML
-    title_tag = soup.find('title')  # шукаємо тег <title>
-    desc_tag = soup.find('meta', {'name': 'description'})  # шукаємо опис
-    if not title_tag or not desc_tag:
-        print("Invalid movie page!")  # якщо нічого не знайдено
-        return
-    title = title_tag.text.strip().split(" - ")[0]  # обробляємо заголовок
-    desc = desc_tag.get('content').strip()  # отримуємо текст опису
-    print({"title": title, "description": desc})  # виводимо словник
+    try:
+        res = requests.get(url, headers=HEADERS, verify=False)
+        if res.status_code != 200:
+            print("Invalid movie page!")
+            return
+        soup = BeautifulSoup(res.content, 'html.parser')
+        title_tag = soup.find('title')
+        desc_tag = soup.find('meta', {'name': 'description'})
+        if not title_tag or not desc_tag:
+            print("Invalid movie page!")
+            return
+        title = title_tag.text.strip()
+        description = desc_tag['content'].strip()
+        print({"title": title, "description": description})
+    except Exception:
+        print("Invalid movie page!")
 
-# етап 3: збереження HTML-коду сторінки
+# Етап 3: зберігаємо HTML сторінку у файл
+
 def save_html():
-    url = input("Input the URL:\n> ").strip()  # запитати URL
-    response = requests.get(url)  # зробити запит
-    if response.status_code != 200:
-        print(f"The URL returned {response.status_code}!")  # вивести код помилки
-        return
-    with open("source.html", "wb") as f:  # запис у файл у бінарному режимі
-        f.write(response.content)
-    print("Content saved.")  # повідомлення про успіх
+    url = input("Input the URL:\n> ").strip()
+    try:
+        res = requests.get(url, verify=False, headers=HEADERS)
+        if res.status_code != 200:
+            print(f"The URL returned {res.status_code}!")
+            return
+        with open("source.html", "wb") as f:
+            f.write(res.content)
+        print("Content saved.")
+    except Exception:
+        print("Error occurred while fetching the page.")
 
-# етап 4: парсинг статей типу News зі сторінки nature.com
+# допоміжна функція для створення коректного імені файлу
+
+def sanitize_filename(name):
+    name = name.translate(str.maketrans('', '', string.punctuation)).replace(' ', '_')
+    return name.strip()
+
+# Етап 4-5: завантажуємо статті за типом і зберігаємо у відповідну директорію
+
 def save_articles():
-    url = "https://www.nature.com/nature/articles?sort=PubDate&year=2022&page=3"
-    response = requests.get(url, headers={'Accept-Language': 'en-US,en;q=0.5'})
-    soup = BeautifulSoup(response.content, "html.parser")
-    articles = soup.find_all("article")  # знаходимо всі теги article
-    saved = []  # список збережених файлів
-    for article in articles:
-        type_tag = article.find("span", {"data-test": "article.type"})
-        if not type_tag or type_tag.text.strip() != "News":  # фільтрація тільки "News"
+    page_count = int(input())  # кількість сторінок
+    article_type = input().strip().lower()  # тип статей
+    base_url = 'https://www.nature.com/nature/articles?sort=PubDate&year=2022&page='
+    
+    for page in range(1, page_count + 1):
+        dir_name = f"Page_{page}"
+        os.makedirs(dir_name, exist_ok=True)
+        
+        url = base_url + str(page)
+        res = requests.get(url, headers=HEADERS, verify=False)
+        if res.status_code != 200:
             continue
-        link_tag = article.find("a", {"data-track-action": "view article"})
-        if not link_tag:
-            continue
-        article_url = "https://www.nature.com" + link_tag.get("href")  # повне посилання
-        article_resp = requests.get(article_url, headers={'Accept-Language': 'en-US,en;q=0.5'})
-        article_soup = BeautifulSoup(article_resp.content, "html.parser")
-        body_tag = article_soup.find("div", class_="c-article-body")  # тіло статті
-        if not body_tag:
-            continue
-        title = link_tag.text.strip()  # заголовок статті
-        # форматування назви файла
-        filename = title.translate(str.maketrans('', '', string.punctuation)).replace(' ', '_') + ".txt"
-        filepath = os.path.join(".", filename)
-        with open(filepath, "w", encoding="utf-8") as f:
-            f.write(body_tag.text.strip())  # запис тексту статті
-        saved.append(filename)
-    print("Saved articles:", saved)  # вивід збережених файлів
 
-# етап 5: парсинг кількох сторінок і кількох типів статей
-def multi_page_parser():
-    page_count = int(input("> "))  # кількість сторінок
-    article_type = input("> ").strip()  # тип статей
-    base_url = "https://www.nature.com/nature/articles?sort=PubDate&year=2022&page="
+        soup = BeautifulSoup(res.content, 'html.parser')
+        articles = soup.find_all('article')
 
-    for i in range(1, page_count + 1):
-        os.makedirs(f"Page_{i}", exist_ok=True)  # створюємо директорію для сторінки
-        response = requests.get(base_url + str(i), headers={'Accept-Language': 'en-US,en;q=0.5'})
-        soup = BeautifulSoup(response.content, "html.parser")
-        articles = soup.find_all("article")
         for article in articles:
-            type_tag = article.find("span", {"data-test": "article.type"})
-            if not type_tag or type_tag.text.strip() != article_type:
-                continue  # пропускаємо не ті типи статей
-            link_tag = article.find("a", {"data-track-action": "view article"})
-            if not link_tag:
+            art_type_tag = article.find('span', {'data-test': 'article.type'})
+            found_type = art_type_tag.text.strip().lower() if art_type_tag else ""
+            if article_type not in found_type:
                 continue
-            article_url = "https://www.nature.com" + link_tag.get("href")
-            article_resp = requests.get(article_url, headers={'Accept-Language': 'en-US,en;q=0.5'})
-            article_soup = BeautifulSoup(article_resp.content, "html.parser")
-            body_tag = article_soup.find("div", class_="c-article-body")
-            if not body_tag:
-                continue
-            title = link_tag.text.strip()
-            filename = title.translate(str.maketrans('', '', string.punctuation)).replace(' ', '_') + ".txt"
-            filepath = os.path.join(f"Page_{i}", filename)
-            with open(filepath, "w", encoding="utf-8") as f:
-                f.write(body_tag.text.strip())
-    print("Saved all articles.")  # повідомлення про завершення
 
-# запуск потрібної функції поетапно для перевірки
-# get_quote()
-# get_imdb_info()
-# save_html()
-# save_articles()
-# multi_page_parser()
+            link_tag = article.find('a', href=True)
+            if not link_tag or not link_tag['href'].startswith('/articles/'):
+                continue
+
+            article_url = 'https://www.nature.com' + link_tag['href']
+            article_res = requests.get(article_url, headers=HEADERS, verify=False)
+            if article_res.status_code != 200:
+                continue
+
+            article_soup = BeautifulSoup(article_res.content, 'html.parser')
+            body = article_soup.find('div', class_=lambda x: x and 'body' in x)
+            if not body:
+                body = article_soup.find('div', {'role': 'main'})
+            if not body:
+                continue
+
+            content = body.get_text(strip=True)
+            title = link_tag.text.strip()
+            filename = sanitize_filename(title) + ".txt"
+            filepath = os.path.join(dir_name, filename)
+            with open(filepath, 'w', encoding='utf-8') as f:
+                f.write(content)
+    print("Saved all articles.")
+
+# меню вибору етапів
+
+def main():
+    print("Вибери етап: 1, 2, 3 або 4")
+    stage = input("> ").strip()
+    if stage == '1':
+        get_quote()
+    elif stage == '2':
+        get_movie_info()
+    elif stage == '3':
+        save_html()
+    elif stage == '4':
+        save_articles()
+    else:
+        print("Invalid stage")
+
+if __name__ == "__main__":
+    main()
